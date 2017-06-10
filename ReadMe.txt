@@ -1,4 +1,5 @@
 Maze Generator by unionning graphs
+Warning! stroboscopic Output! delete the system("cls"); from the loops to see the final result.
 
 Considering this "maze under construction" where every " - " is a graph that contains exactly 1 node.
 

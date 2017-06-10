@@ -6,16 +6,16 @@
 typedef struct
 {
 	int x, y;
-}muchie;
+}node;
 
 void wait(float seconds)
 {
 	clock_t endwait;
-	endwait = clock() + seconds * CLOCKS_PER_SEC;
+	endwait = clock() + (clock_t)seconds * CLOCKS_PER_SEC;
 	while (clock() < endwait) {}
 }
 
-int valid(int **mat, muchie st[500], int k)
+int valid(int **mat, node st[500], int k)
 {
 	int i;
 	if (mat[st[k].x][st[k].y] == 0)
@@ -54,7 +54,7 @@ void afisare(int **mat, int height, int width)
 	printf("\n");
 }
 
-void tipar(int **mat, muchie st[500], int k, int *ok, int *p, int height, int width)
+void tipar(int **mat, node st[500], int k, int *ok, int *p, int height, int width)
 {
 	int i;
 	*ok = 1;
@@ -75,12 +75,6 @@ void tipar(int **mat, muchie st[500], int k, int *ok, int *p, int height, int wi
 	{
 		case 1:  mat[st[i].x][st[i].y] = 5;  break;
 		default: mat[st[i].x][st[i].y] = p[i];  break;
-	}
-
-	switch (p[1])
-	{
-		case 1:  mat[st[0].x][st[0].y] = 5;  break;
-		default: mat[st[0].x][st[0].y] = p[1];  break;
 	}
 
 	system("cls");
@@ -110,14 +104,9 @@ int main()
 	int **maze, i, j, n, m, r;
 	srand((unsigned int)time(NULL));
 
-	/*
-	printf("nr linii = ");
-	scanf("%d",&n);
-	printf("nr coloane = ");
-	scanf("%d",&m);
-	*/
-	n = 31;
-	m = 31;
+	// number of lines and columns
+	n = 21;
+	m = 21;
 
 	maze = (int**)malloc((n + 1) * sizeof(int*));
 	for (i = 1; i <= n; i++)
@@ -129,10 +118,10 @@ int main()
 	int nr = 0; // nr noduri
 	int graph1 = 0, graph2 = 0;
 
-	muchie **v = (muchie **)malloc(1000 * sizeof(muchie*));
+	node **v = (node **)malloc(1000 * sizeof(node*));
 	for (i = 0; i<1000; i++)
-		v[i] = (muchie *)calloc(10000, sizeof(muchie));
-	muchie *a = (muchie*)calloc(10000, sizeof(muchie));
+		v[i] = (node *)calloc(10000, sizeof(node));
+	node *a = (node*)calloc(10000, sizeof(node));
 
 	for (i = 2; i<n; i += 2)
 		for (j = 2; j<m; j += 2)
@@ -240,7 +229,7 @@ int main()
 	maze[n - 1][1] = 0;	// inchid intrarea de jos stanga ca sa o pot gasi pe cea de sus stanga
 
 	// "stiva" ce retine solutia
-	muchie *st = (muchie*)calloc((n*m / 2), sizeof(muchie));
+	node *st = (node*)calloc((n*m / 2), sizeof(node));
 
 	// vector ce retine directia
 	int *p = (int*)calloc((n*m / 2), sizeof(int));
@@ -252,7 +241,7 @@ int main()
 	//bt();
 
 	int k, as, ev, ok = 0;
-	muchie d[5] = { { 0,0 }, { 0,1 }, { 1,0 }, { 0,-1 }, { -1,0 } };
+	node d[5] = { { 0,0 }, { 0,1 }, { 1,0 }, { 0,-1 }, { -1,0 } };
 
 	k = 2;
 	while (k>1)
