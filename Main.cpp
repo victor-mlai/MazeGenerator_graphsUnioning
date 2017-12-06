@@ -3,19 +3,26 @@
 #include <stdlib.h>	// malloc and calloc
 #include <conio.h>	// _getch()
 
-typedef struct
+struct vec2
 {
 	int x, y;
-}node;
+	vec2 operator+ (vec2& other) {
+		return { x + other.x, y + other.y };
+	}
+
+	void operator= (vec2& other) {
+		x = other.x;
+		y = other.y;
+	}
+};
 
 void wait(float seconds)
 {
-	clock_t endwait;
-	endwait = clock() + (clock_t)seconds * CLOCKS_PER_SEC;
+	clock_t endwait = clock() + (clock_t)seconds * CLOCKS_PER_SEC;
 	while (clock() < endwait) {}
 }
 
-int valid(int **mat, node st[500], int k)
+int valid(int **mat, vec2 st[500], int k)
 {
 	int i;
 	if (mat[st[k].x][st[k].y] == 0)
@@ -30,7 +37,7 @@ int valid(int **mat, node st[500], int k)
 void afisare(int **mat, int height, int width)
 {
 	int i, j;
-	int zid = 254;
+	int zid = 219;
 
 	printf("\n");
 	for (j = 1; j <= width; j++)
@@ -42,19 +49,19 @@ void afisare(int **mat, int height, int width)
 			switch (mat[i][j])
 			{
 			case 0: printf("%c%c%c", zid, zid, zid); break;
-			case 1: printf("   "); break;
-			case 2: printf(" v "); break;
-			case 3: printf(" < "); break;
-			case 4: printf(" ^ "); break;
-			case 5: printf(" > "); break;
-			default: break;
+			//case 1: printf("   "); break;
+			//case 2: printf(" v "); break;
+			//case 3: printf(" < "); break;
+			//case 4: printf(" ^ "); break;
+			//case 5: printf(" > "); break;
+			default: printf("   "); break;
 			}
 		printf(" %d\n", i);
 	}
 	printf("\n");
 }
 
-void tipar(int **mat, node st[500], int k, int *ok, int *p, int height, int width)
+void tipar(int **mat, vec2 st[500], int k, int *ok, int *p, int height, int width)
 {
 	int i;
 	*ok = 1;
@@ -67,8 +74,8 @@ void tipar(int **mat, node st[500], int k, int *ok, int *p, int height, int widt
 			case 1:  mat[st[i].x][st[i].y] = 5;  break;
 			default: mat[st[i].x][st[i].y] = p[i + 1];  break;
 		}
-		system("cls");
-		afisare(mat, height, width);
+		//system("cls");
+		//afisare(mat, height, width);
 	}
 
 	switch (p[i])
@@ -99,29 +106,95 @@ int verif(int **maze, int Ai, int Aj, int Bi, int Bj, int n, int m)
 	return suma;   // returnez nr de drumuri de la A la B
 }
 
+// returneaza true cu o probabilitate de 1/nr
+bool cond(int nr) {
+	return ((float)rand() / RAND_MAX < (float)1 / nr);
+}
+
 int main()
 {
-	int **maze, i, j, n, m, r;
+	int i, j, n, m, r;
 	srand((unsigned int)time(NULL));
 
 	// number of lines and columns
-	n = 21;
-	m = 21;
+	n = 37;
+	m = 25;
 
-	maze = (int**)malloc((n + 1) * sizeof(int*));
-	for (i = 1; i <= n; i++)
-		maze[i] = (int*)calloc(m + 1, sizeof(int));
+	int** maze = (int**)malloc((n + 2) * sizeof(int*));
+	for (i = 0; i < n + 2; i++)
+		maze[i] = (int*)calloc((m + 2), sizeof(int));
 
 	// creare labirint: conex
 
-	int g = 0; // nr grafuri
-	int nr = 0; // nr noduri
+	int id_graph = 0, id_ng;
+	for (i = 2; i < n; i += 2) {
+		for (j = 2; j < m; j += 2) {
+			id_graph++;
+			maze[i][j] = id_graph;
+		}
+	}
+
+	afisare(maze, n, m);
+	int g = id_graph; // nr grafuri
+	int rx, ry;
+	int k;
+	vec2 d[5] = { { 0,2 },{ 2,0 },{ 0,-2 },{ -2,0 } };
+
+	vec2 x, y;
+	int nr;
+	while (g > 1) {
+		rx = (((rand()) % (n - 4)) / 2) * 2 + 2;	// gives a random odd number between 2 and n - 2
+		ry = (((rand()) % (m - 4)) / 2) * 2 + 2;
+		id_graph = maze[rx][ry];
+		nr = 1;
+		for (i = 2; i < n; i += 2) {
+			for (j = 2; j < m; j += 2) {
+				if (maze[i][j] == id_graph) {
+					for (k = 0; k < 4; k++) {	// for each neighbour
+						if (maze[i + d[k].x][j + d[k].y] != 0 &&
+							maze[i + d[k].x][j + d[k].y] != id_graph) {
+							if (cond(nr)) {
+								x.x = i + d[k].x;
+								x.y = j + d[k].y;
+								y.x = i;
+								y.y = j;
+								nr++;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		maze[(x.x + y.x) / 2][(x.y + y.y) / 2] = 1;
+
+		id_ng = maze[x.x][x.y];
+
+		for (i = 2; i < n; i += 2) {
+			for (j = 2; j < m; j += 2) {
+				if (maze[i][j] == id_graph) {
+					maze[i][j] = id_ng;
+				}
+			}
+		}
+		
+		system("cls");
+		afisare(maze, n, m);
+		//wait((float)0.1);
+		g--;
+	}
+
+	maze[n - 1][1] = 1;
+	maze[2][m] = 1;
+
+	/* old version
+
 	int graph1 = 0, graph2 = 0;
 
-	node **v = (node **)malloc(1000 * sizeof(node*));
+	vec2 **v = (vec2 **)malloc(1000 * sizeof(vec2*));
 	for (i = 0; i<1000; i++)
-		v[i] = (node *)calloc(10000, sizeof(node));
-	node *a = (node*)calloc(10000, sizeof(node));
+		v[i] = (vec2 *)calloc(10000, sizeof(vec2));
+	vec2 *a = (vec2*)calloc(10000, sizeof(vec2));
 
 	for (i = 2; i<n; i += 2)
 		for (j = 2; j<m; j += 2)
@@ -200,7 +273,8 @@ int main()
 				}
 		}
 
-		for (j = 1; v[graph1][j].x != 0; j++) {}
+		for (j = 1; v[graph1][j].x != 0; j++) {
+		}
 		v[graph1][j].x = 1;
 		for (i = 1; v[graph2][i].x != 0; i++)
 		{
@@ -217,6 +291,7 @@ int main()
 
 	maze[n - 1][1] = 1;
 	maze[2][m] = 1;
+	*/
 
 	system("cls");
 	afisare(maze, n, m);
@@ -226,10 +301,12 @@ int main()
 		return 0;
 
 	/* rezolvare labirint */
+
+	/*	backtracking
 	maze[n - 1][1] = 0;	// inchid intrarea de jos stanga ca sa o pot gasi pe cea de sus stanga
 
 	// "stiva" ce retine solutia
-	node *st = (node*)calloc((n*m / 2), sizeof(node));
+	vec2 *st = (vec2*)calloc((n*m / 2), sizeof(vec2));
 
 	// vector ce retine directia
 	int *p = (int*)calloc((n*m / 2), sizeof(int));
@@ -240,8 +317,7 @@ int main()
 
 	//bt();
 
-	int k, as, ev, ok = 0;
-	node d[5] = { { 0,0 }, { 0,1 }, { 1,0 }, { 0,-1 }, { -1,0 } };
+	int as, ev, ok = 0;
 
 	k = 2;
 	while (k>1)
@@ -274,9 +350,13 @@ int main()
 			}
 		else k--;
 	}
+	
 
 	if (!ok)
 		printf("Nu exista solutii\n");
+	
+	*/
+
 
 	_getch();	// waits any key
 
