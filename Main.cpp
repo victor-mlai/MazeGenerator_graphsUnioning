@@ -4,14 +4,22 @@
 #include <conio.h>	// _getch()
 #include <queue>	// used by bfs
 
-#define N 25	// number of lines
-#define M 21	// number of columns
+#define N 61	// number of lines
+#define M 81	// number of columns
 #define BLOCK -1
+
+#define UP    -2
+#define RIGHT -3
+#define DOWN  -4
+#define LEFT  -5
+
 #define MAXDIST 2*(N+M)
+
 #define UP1 {0, -1}
 #define RIGHT1 {1, 0}
 #define DOWN1 {0, 1}
 #define LEFT1 {-1, 0}
+
 #define UP2 {0, -2}
 #define RIGHT2 {2, 0}
 #define DOWN2 {0, 2}
@@ -28,7 +36,7 @@ struct vec2
 		return { x + other.x, y + other.y };
 	}
 
-	void operator= (vec2& other) {
+	void operator= (const vec2& other) {
 		x = other.x;
 		y = other.y;
 	}
@@ -40,7 +48,13 @@ struct vec2
 	bool operator!= (vec2& other) {
 		return (x != other.x) || (y != other.y);
 	}
+
+	bool operator< (const vec2& other)
+	{
+		return x + y < other.x + other.y;
+	}
 };
+
 
 void wait(float seconds)
 {
@@ -48,30 +62,30 @@ void wait(float seconds)
 	while (clock() < endwait) {}
 }
 
-void display(int **mat)
+void DebugDisplay(int **mat)
 {
 	int i, j;
 	int block = 219;
 
 	printf("\n");
-	for (j = 0; j <= M + 1; j++)
+	for (j = 1; j <= M ; j++)
 		printf(" %-2d", j);
 	printf("\n");
-	for (i = 0; i <= N + 1; i++)
+	for (i = 1; i <= N ; i++)
 	{
-		for (j = 0; j <= M + 1; j++)
+		for (j = 1; j <= M ; j++)
 			switch (mat[i][j])
 			{
 			case BLOCK: 
 				printf("%c%c%c", block, block, block); 
 				break;
-			//case 1: printf("   "); break;
-			//case 2: printf(" v "); break;
-			//case 3: printf(" < "); break;
-			//case 4: printf(" ^ "); break;
-			//case 5: printf(" > "); break;
+			case UP:    printf(" ^ "); break;
+			case RIGHT: printf(" > "); break;
+			case DOWN:  printf(" v "); break;
+			case LEFT:  printf(" < "); break;
 			default:
-				printf("%-3d", mat[i][j]);
+				//printf("%-3d", mat[i][j]);
+				printf("   ");
 				break;
 			}
 		printf(" %d\n", i);
@@ -86,41 +100,68 @@ void solveBFS(int** maze, vec2 start, vec2 exit) {
 		}
 	}
 
-	system("cls");
-	display(maze);
+	//system("cls");
+	//DebugDisplay(maze);
 
 	std::queue<vec2> q;
 	vec2 d[] = { UP1, RIGHT1, DOWN1, LEFT1 };	// directions
 
 	q.push(exit);
 
-	vec2 F, V;
+	vec2 T, V;
 	while (!q.empty()) {
-		F = q.front();
+		T = q.front();
 		q.pop();
 
-		
-
 		for (vec2 dir : d) {	// for each neighbour
-			V = F + dir;
+			V = T + dir;
 
-			if (maze[V.x][V.y] > maze[F.x][F.y] + 1) {
-				maze[V.x][V.y] = maze[F.x][F.y] + 1;
+			if (maze[V.x][V.y] > maze[T.x][T.y] + 1) {
+				maze[V.x][V.y] = maze[T.x][T.y] + 1;
 				if (V == start)
 					break;
 				q.push(V);
 			}
 		}
 
+		//system("cls");
+		//display(maze);
+
 		if (V == start)
 			break;
+	}
 
-		system("cls");
-		display(maze);
+	if (V != start) {
+		printf("No solution exists\n");
+		return;
+	}
+
+	vec2 curr = start;
+	int min = maze[curr.x][curr.y];
+	std::vector<vec2> path;
+	std::vector<int> dirs;
+	path.push_back(start);
+	dirs.push_back(RIGHT);
+
+	while (curr != exit) {
+		for (int i = 0; i < 4; i++) {
+			V = curr + d[i];
+			if (maze[V.x][V.y] != BLOCK && maze[V.x][V.y] < min) {
+				curr = V;
+				min = maze[V.x][V.y];
+				path.push_back(curr);
+				dirs.push_back(i - 5);
+			}
+		}
+	}
+	dirs.push_back(RIGHT);
+
+	for (int i = 0; i < path.size(); i++) {
+		maze[path[i].x][path[i].y] = dirs[i + 1];
 	}
 
 	system("cls");
-	display(maze);
+	DebugDisplay(maze);
 }
 
 // returns true with a probability of 1/nr
@@ -134,7 +175,6 @@ void createMaze(int** maze) {
 	int id_ng;	// new graph id
 	int nrOfGraphs;
 	int rx, ry;
-	int k;
 	vec2 d[] = { UP2, RIGHT2, DOWN2, LEFT2 };	// directions
 
 	for (int i = 0; i < N + 2; i++) {
@@ -151,7 +191,8 @@ void createMaze(int** maze) {
 		}
 	}
 
-	display(maze);
+	//system("cls");
+	//DebugDisplay(maze);
 	nrOfGraphs = id_graph; // nr grafuri
 
 	vec2 x, y;	// create connection between x and y (delete the block betwwen them)
@@ -212,7 +253,7 @@ int main()
 		createMaze(maze);
 
 		system("cls");
-		display(maze);
+		DebugDisplay(maze);
 
 		printf("\n Afisati solutie?\nd\\n\n");
 		if (_getch() == 'd')
