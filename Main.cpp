@@ -233,7 +233,7 @@ void createMaze(int** maze) {
 		}
 
 		//system("cls");
-		//display(maze);
+		//DebugDisplay(maze);
 		//wait(0.3f);
 		nrOfGraphs--;
 	}
