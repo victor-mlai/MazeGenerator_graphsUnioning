@@ -4,8 +4,8 @@
 #include <conio.h>	// _getch()
 #include <queue>	// used by bfs
 
-#define N 61	// number of lines
-#define M 81	// number of columns
+#define N 31	// number of lines
+#define M 21	// number of columns
 #define BLOCK -1
 
 #define UP    -2
@@ -25,12 +25,20 @@
 #define DOWN2 {0, 2}
 #define LEFT2 {-2, 0}
 
+int abs(int x) {
+	return x > 0 ? x : -x;
+}
+
 struct vec2
 {
 	int x, y;
 
 	vec2() {}
 	vec2(int x, int y) : x(x), y(y) {}
+
+	int distance(vec2 other) {
+		return (other.x - x) * (other.x - x) + (other.y - y) * (other.y - y);
+	}
 
 	vec2 operator+ (vec2& other) {
 		return { x + other.x, y + other.y };
@@ -48,13 +56,7 @@ struct vec2
 	bool operator!= (vec2& other) {
 		return (x != other.x) || (y != other.y);
 	}
-
-	bool operator< (const vec2& other)
-	{
-		return x + y < other.x + other.y;
-	}
 };
-
 
 void wait(float seconds)
 {
@@ -83,9 +85,10 @@ void DebugDisplay(int **mat)
 			case RIGHT: printf(" > "); break;
 			case DOWN:  printf(" v "); break;
 			case LEFT:  printf(" < "); break;
+			case MAXDIST: printf("   "); break;
 			default:
-				//printf("%-3d", mat[i][j]);
-				printf("   ");
+				printf("%-3d", mat[i][j]);
+				//printf("   ");
 				break;
 			}
 		printf(" %d\n", i);
@@ -100,19 +103,23 @@ void solveBFS(int** maze, vec2 start, vec2 exit) {
 		}
 	}
 
-	//system("cls");
-	//DebugDisplay(maze);
+	system("cls");
+	DebugDisplay(maze);
 
-	std::queue<vec2> q;
+	auto cmp = [start](vec2 v1, vec2 v2) { return v1.distance(start) > v2.distance(start); };
+	std::priority_queue<vec2, std::vector<vec2>, decltype(cmp)> q(cmp);
+
 	vec2 d[] = { UP1, RIGHT1, DOWN1, LEFT1 };	// directions
 
 	q.push(exit);
 
 	vec2 T, V;
+	bool print;
 	while (!q.empty()) {
-		T = q.front();
+		T = q.top();
 		q.pop();
 
+		print = false;
 		for (vec2 dir : d) {	// for each neighbour
 			V = T + dir;
 
@@ -121,11 +128,14 @@ void solveBFS(int** maze, vec2 start, vec2 exit) {
 				if (V == start)
 					break;
 				q.push(V);
+				print = true;
 			}
 		}
 
-		//system("cls");
-		//display(maze);
+		if (print) {
+			system("cls");
+			DebugDisplay(maze);
+		}
 
 		if (V == start)
 			break;
