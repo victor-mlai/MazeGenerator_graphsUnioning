@@ -66,25 +66,24 @@ void wait(float seconds)
 
 void DebugDisplay(int **mat)
 {
-	int i, j;
 	int block = 219;
 
 	printf("\n");
-	for (j = 1; j <= M ; j++)
+	for (int j = 1; j <= M ; j++)
 		printf(" %-2d", j);
 	printf("\n");
-	for (i = 1; i <= N ; i++)
+	for (int i = 1; i <= N ; i++)
 	{
-		for (j = 1; j <= M ; j++)
+		for (int j = 1; j <= M ; j++)
 			switch (mat[i][j])
 			{
 			case BLOCK: 
 				printf("%c%c%c", block, block, block); 
 				break;
-			case UP:    printf(" ^ "); break;
-			case RIGHT: printf(" > "); break;
-			case DOWN:  printf(" v "); break;
-			case LEFT:  printf(" < "); break;
+			case UP:    printf(" v "); break;	// these are inversed
+			case RIGHT: printf(" < "); break;	// so the path can be
+			case DOWN:  printf(" ^ "); break;	// shown backwards
+			case LEFT:  printf(" > "); break;
 			case MAXDIST: printf("   "); break;
 			default:
 				printf("%-3d", mat[i][j]);
@@ -97,21 +96,13 @@ void DebugDisplay(int **mat)
 }
 
 void solveBFS(int** maze, vec2 start, vec2 exit) {
-	for (int i = 2; i < N; i += 2) {
-		for (int j = 2; j < M; j += 2) {
-			maze[i][j] = MAXDIST;
-		}
-	}
 
-	system("cls");
-	DebugDisplay(maze);
-
-	auto cmp = [start](vec2 v1, vec2 v2) { return v1.distance(start) > v2.distance(start); };
+	auto cmp = [exit](vec2 v1, vec2 v2) { return v1.distance(exit) > v2.distance(exit); };
 	std::priority_queue<vec2, std::vector<vec2>, decltype(cmp)> q(cmp);
 
 	vec2 d[] = { UP1, RIGHT1, DOWN1, LEFT1 };	// directions
 
-	q.push(exit);
+	q.push(start);
 
 	vec2 T, V;
 	bool print;
@@ -125,7 +116,7 @@ void solveBFS(int** maze, vec2 start, vec2 exit) {
 
 			if (maze[V.x][V.y] > maze[T.x][T.y] + 1) {
 				maze[V.x][V.y] = maze[T.x][T.y] + 1;
-				if (V == start)
+				if (V == exit)
 					break;
 				q.push(V);
 				print = true;
@@ -137,23 +128,23 @@ void solveBFS(int** maze, vec2 start, vec2 exit) {
 			DebugDisplay(maze);
 		}
 
-		if (V == start)
+		if (V == exit)
 			break;
 	}
 
-	if (V != start) {
+	if (V != exit) {
 		printf("No solution exists\n");
 		return;
 	}
 
-	vec2 curr = start;
+	vec2 curr = exit;
 	int min = maze[curr.x][curr.y];
 	std::vector<vec2> path;
 	std::vector<int> dirs;
-	path.push_back(start);
-	dirs.push_back(RIGHT);
+	path.push_back(exit);
+	dirs.push_back(LEFT);
 
-	while (curr != exit) {
+	while (curr != start) {
 		for (int i = 0; i < 4; i++) {
 			V = curr + d[i];
 			if (maze[V.x][V.y] != BLOCK && maze[V.x][V.y] < min) {
@@ -164,10 +155,10 @@ void solveBFS(int** maze, vec2 start, vec2 exit) {
 			}
 		}
 	}
-	dirs.push_back(RIGHT);
+	dirs.push_back(LEFT);
 
 	for (int i = 0; i < path.size(); i++) {
-		maze[path[i].x][path[i].y] = dirs[i + 1];
+		maze[path[i].x][path[i].y] = dirs[i];
 	}
 
 	system("cls");
@@ -247,8 +238,14 @@ void createMaze(int** maze) {
 		nrOfGraphs--;
 	}
 
-	maze[N - 1][1] = MAXDIST;
-	maze[2][M] = 0;
+	for (int i = 2; i < N; i += 2) {
+		for (int j = 2; j < M; j += 2) {
+			maze[i][j] = MAXDIST;
+		}
+	}
+
+	maze[N - 1][1] = 0;
+	maze[2][M] = MAXDIST;
 }
 
 int main()
