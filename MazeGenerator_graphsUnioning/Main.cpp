@@ -3,6 +3,7 @@
 #include <stdlib.h>	// malloc and calloc
 #include <conio.h>	// _getch()
 #include <queue>	// used by bfs
+#include "olcConsoleGameEngine.h"
 
 #define N 31	// number of lines
 #define M 21	// number of columns
@@ -124,8 +125,9 @@ void solveBFS(int** maze, vec2 start, vec2 exit) {
 		}
 
 		if (print) {
-			system("cls");
-			DebugDisplay(maze);
+			//system("cls");
+			//DebugDisplay(maze);
+			this_thread::sleep_for(100ms);
 		}
 
 		if (V == exit)
@@ -133,7 +135,7 @@ void solveBFS(int** maze, vec2 start, vec2 exit) {
 	}
 
 	if (V != exit) {
-		printf("No solution exists\n");
+		//printf("No solution exists\n");
 		return;
 	}
 
@@ -159,10 +161,11 @@ void solveBFS(int** maze, vec2 start, vec2 exit) {
 
 	for (int i = 0; i < path.size(); i++) {
 		maze[path[i].x][path[i].y] = dirs[i];
+		this_thread::sleep_for(100ms);
 	}
 
-	system("cls");
-	DebugDisplay(maze);
+	//system("cls");
+	//DebugDisplay(maze);
 }
 
 // returns true with a probability of 1/nr
@@ -171,6 +174,8 @@ bool cond(int nr) {
 }
 
 void createMaze(int** maze) {
+	srand((unsigned int)time(NULL));
+
 	int i, j;
 	int id_graph; // current graph id
 	int id_ng;	// new graph id
@@ -232,6 +237,8 @@ void createMaze(int** maze) {
 			}
 		}
 
+		this_thread::sleep_for(100ms);
+
 		//system("cls");
 		//DebugDisplay(maze);
 		//wait(0.3f);
@@ -246,33 +253,82 @@ void createMaze(int** maze) {
 
 	maze[N - 1][1] = 0;
 	maze[2][M] = MAXDIST;
+
+	solveBFS(maze, vec2(N - 1, 1), vec2(2, M));
+}
+
+class Maze : public olcConsoleGameEngine {
+public:
+	int** maze;
+
+	Maze(int** maze) : maze(maze) {
+		m_sAppName = L"Maze";
+	}
+
+	bool OnUserCreate() {
+
+		return true;
+	}
+
+	bool OnUserUpdate(float deltaTime) {
+		// continously draw the maze
+		for (int i = 1; i < N + 1; i++) {
+			for (int j = 1; j < M + 1; j++) {
+				switch (maze[i][j])
+				{
+				case BLOCK :
+					Draw(i, j, PIXEL_SOLID, FG_DARK_BLUE);	// draw a solid block
+					break;
+				case UP:    Draw(i, j, L'>', FG_YELLOW); break;	// these are inversed
+				case RIGHT: Draw(i, j, L'^', FG_YELLOW); break;	// so the path can be
+				case DOWN:  Draw(i, j, L'<', FG_YELLOW); break;	// shown backwards
+				case LEFT:  Draw(i, j, L'v', FG_YELLOW); break;
+				case MAXDIST: Draw(i, j, L'-'); break;
+				default:
+					Draw(i, j, L' ');	// draw nothing
+					break;
+				}
+			}
+		}
+		return true;
+	}
+};
+
+void startApp(Maze& m) {
+	m.Start();
 }
 
 int main()
 {
-	srand((unsigned int)time(NULL));
-
 	int** maze = (int**)malloc((N + 2) * sizeof(int*));
 	for (int i = 0; i < N + 2; i++)
 		maze[i] = (int*)malloc((M + 2) * sizeof(int));
 
-	while (true) {
-		createMaze(maze);
+	Maze maze_app = Maze(maze);
+	maze_app.ConstructConsole(80, 60, 10, 10);
 
-		system("cls");
-		DebugDisplay(maze);
+	std::thread first(startApp, maze_app);
+	std::thread second(createMaze, maze);
 
-		printf("\n Afisati solutie?\nd\\n\n");
-		if (_getch() == 'd')
-			solveBFS(maze, vec2(N - 1, 1), vec2(2, M));
+	//while (true) {
+		//createMaze(maze);
+
+		//system("cls");
+		//DebugDisplay(maze);
+		//
+		//printf("\n Afisati solutie?\nd\\n\n");
+		//if (_getch() == 'd')
+			
 	
-		printf("\n Display another maze?\nd\\n\n");
-		if (_getch() == 'n')
-			break;
-	}
+		//printf("\n Display another maze?\nd\\n\n");
+		//if (_getch() == 'n')
+		//	break;
+	//}
 
-	printf("\n Press any key to exit\n");
-	_getch();	// waits any key
+	//printf("\n Press any key to exit\n");
+	//_getch();	// waits any key
+
+			while (1);
 
 	return 0;
 }
