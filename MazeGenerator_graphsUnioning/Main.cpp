@@ -4,17 +4,22 @@
 #include <conio.h>	// _getch()
 #include <queue>	// used by bfs
 #include "olcConsoleGameEngine.h"
+#include <condition_variable>
+#include <mutex>
 
-#define N 31	// number of lines
-#define M 21	// number of columns
+#define N 197	// number of lines
+#define M 107	// number of columns
+#define MAXDIST (N*M)
+
 #define BLOCK -1
+#define EMPTY 0
+#define START 1
+#define EXIT (MAXDIST + 1)
 
 #define UP    -2
 #define RIGHT -3
 #define DOWN  -4
 #define LEFT  -5
-
-#define MAXDIST 2*(N+M)
 
 #define UP1 {0, -1}
 #define RIGHT1 {1, 0}
@@ -25,6 +30,12 @@
 #define RIGHT2 {2, 0}
 #define DOWN2 {0, 2}
 #define LEFT2 {-2, 0}
+
+bool restart = false;
+bool solve = false;
+
+std::condition_variable reDrawMaze;
+std::mutex mtx;	
 
 int abs(int x) {
 	return x > 0 ? x : -x;
@@ -97,6 +108,10 @@ void DebugDisplay(int **mat)
 }
 
 void solveBFS(int** maze, vec2 start, vec2 exit) {
+	// set value in Maze
+	//auto setMaze = [maze](vec2& v, int value)->void { maze[v.x][v.y] = value; };
+	// get value
+	//auto getMaze = [maze](vec2& v)->int {return maze[v.x][v.y]; };
 
 	auto cmp = [exit](vec2 v1, vec2 v2) { return v1.distance(exit) > v2.distance(exit); };
 	std::priority_queue<vec2, std::vector<vec2>, decltype(cmp)> q(cmp);
@@ -116,6 +131,7 @@ void solveBFS(int** maze, vec2 start, vec2 exit) {
 			V = T + dir;
 
 			if (maze[V.x][V.y] > maze[T.x][T.y] + 1) {
+				//set(V, get(T) + 1);
 				maze[V.x][V.y] = maze[T.x][T.y] + 1;
 				if (V == exit)
 					break;
@@ -127,7 +143,8 @@ void solveBFS(int** maze, vec2 start, vec2 exit) {
 		if (print) {
 			//system("cls");
 			//DebugDisplay(maze);
-			this_thread::sleep_for(100ms);
+			reDrawMaze.notify_one();	// letting the maze object redraw the maze
+			this_thread::sleep_for(35ms);
 		}
 
 		if (V == exit)
@@ -140,7 +157,7 @@ void solveBFS(int** maze, vec2 start, vec2 exit) {
 	}
 
 	vec2 curr = exit;
-	int min = maze[curr.x][curr.y];
+	int min = maze[curr.x][curr.y];	// get(curr);
 	std::vector<vec2> path;
 	std::vector<int> dirs;
 	path.push_back(exit);
@@ -159,9 +176,11 @@ void solveBFS(int** maze, vec2 start, vec2 exit) {
 	}
 	dirs.push_back(LEFT);
 
-	for (int i = 0; i < path.size(); i++) {
+	for (int i = 1; i < path.size() - 1; i++) {
+		//setMaze(path[i], dirs[i]);
 		maze[path[i].x][path[i].y] = dirs[i];
-		this_thread::sleep_for(100ms);
+		reDrawMaze.notify_one();	// letting the maze object redraw the maze
+		this_thread::sleep_for(10ms);
 	}
 
 	//system("cls");
@@ -227,7 +246,7 @@ void createMaze(int** maze) {
 
 		id_ng = maze[x.x][x.y];
 
-		maze[(x.x + y.x) / 2][(x.y + y.y) / 2] = MAXDIST;
+		maze[(x.x + y.x) / 2][(x.y + y.y) / 2] = 0;
 
 		for (i = 2; i < N; i += 2) {
 			for (j = 2; j < M; j += 2) {
@@ -237,7 +256,8 @@ void createMaze(int** maze) {
 			}
 		}
 
-		this_thread::sleep_for(100ms);
+		reDrawMaze.notify_one();	// letting the maze object redraw the maze
+		this_thread::sleep_for(1ms);
 
 		//system("cls");
 		//DebugDisplay(maze);
@@ -245,16 +265,20 @@ void createMaze(int** maze) {
 		nrOfGraphs--;
 	}
 
-	for (int i = 2; i < N; i += 2) {
-		for (int j = 2; j < M; j += 2) {
-			maze[i][j] = MAXDIST;
+	for (int i = 1; i <= N; i++) {
+		for (int j = 1; j <= M; j++) {
+			if (maze[i][j] != BLOCK)
+				maze[i][j] = MAXDIST;	// setting as maxdist for future solving
 		}
 	}
 
-	maze[N - 1][1] = 0;
-	maze[2][M] = MAXDIST;
+	maze[N - 1][1] = EXIT;
+	maze[2][M] = START;
 
-	solveBFS(maze, vec2(N - 1, 1), vec2(2, M));
+	solveBFS(maze, vec2(2, M), vec2(N - 1, 1));
+
+	
+	reDrawMaze.notify_one();	// letting the maze object redraw the maze
 }
 
 class Maze : public olcConsoleGameEngine {
@@ -271,7 +295,12 @@ public:
 	}
 
 	bool OnUserUpdate(float deltaTime) {
-		// continously draw the maze
+		// if (m_keys[L'Q'].bHeld) { return false;	} // idk ... useless ... for now
+
+		// wait until I'm let to redraw the maze
+		reDrawMaze.wait(unique_lock<mutex>(mtx));
+
+		// continously draws the maze
 		for (int i = 1; i < N + 1; i++) {
 			for (int j = 1; j < M + 1; j++) {
 				switch (maze[i][j])
@@ -279,18 +308,24 @@ public:
 				case BLOCK :
 					Draw(i, j, PIXEL_SOLID, FG_DARK_BLUE);	// draw a solid block
 					break;
-				case UP:    Draw(i, j, L'>', FG_YELLOW); break;	// these are inversed
-				case RIGHT: Draw(i, j, L'^', FG_YELLOW); break;	// so the path can be
-				case DOWN:  Draw(i, j, L'<', FG_YELLOW); break;	// shown backwards
+				case UP:    Draw(i, j, L'>', FG_YELLOW); break;
+				case RIGHT: Draw(i, j, L'^', FG_YELLOW); break;
+				case DOWN:  Draw(i, j, L'<', FG_YELLOW); break;
 				case LEFT:  Draw(i, j, L'v', FG_YELLOW); break;
-				case MAXDIST: Draw(i, j, L'-'); break;
+				case MAXDIST: Draw(i, j, L' ');	break;	// draw nothing 
+				case START: Draw(i, j, PIXEL_SOLID, FG_YELLOW);	break;	// draw nothing 
+				case EXIT:  Draw(i, j, PIXEL_SOLID, FG_YELLOW);	break;	// draw nothing 
 				default:
-					Draw(i, j, L' ');	// draw nothing
+					Draw(i, j, PIXEL_SOLID, FG_MAGENTA);
 					break;
 				}
 			}
 		}
 		return true;
+	}
+
+	bool OnUserDestroy() {
+		return false;
 	}
 };
 
@@ -305,10 +340,13 @@ int main()
 		maze[i] = (int*)malloc((M + 2) * sizeof(int));
 
 	Maze maze_app = Maze(maze);
-	maze_app.ConstructConsole(80, 60, 10, 10);
+	maze_app.ConstructConsole(200, 110, 6, 6);
 
-	std::thread first(startApp, maze_app);
-	std::thread second(createMaze, maze);
+	std::thread first(startApp, maze_app);	// continously draws the maze
+	std::thread second(createMaze, maze);	// generates and solves the maze
+
+	first.join();
+	second.join();
 
 	//while (true) {
 		//createMaze(maze);
@@ -316,7 +354,7 @@ int main()
 		//system("cls");
 		//DebugDisplay(maze);
 		//
-		//printf("\n Afisati solutie?\nd\\n\n");
+		//printf("\n Show solution?\nd\\n\n");
 		//if (_getch() == 'd')
 			
 	
@@ -327,8 +365,6 @@ int main()
 
 	//printf("\n Press any key to exit\n");
 	//_getch();	// waits any key
-
-			while (1);
 
 	return 0;
 }
