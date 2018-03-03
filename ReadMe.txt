@@ -1,8 +1,8 @@
 Maze Generator by unionning graphs
 
----> Warning! stroboscopic Output! <---
-delete the system("cls"); and DebugDisplay(); from the loops to see the final result.
-line 127 and 235
+I used the OneLoneCoder's header to create a new console in which to draw the maze.
+I created 2 threads: one that draws the maze and one that creates it and then solves it.
+
 
 Algorithm for Generating the maze:
 Considering this "maze under construction" where each square is a graph that contains exactly 1 node.
@@ -107,5 +107,5 @@ And then solve it using bfs with prioritised direction
   ^     |               | 12
 +---+---+---+---+---+---+ 13
 
-E.g.: if the exit is Top Right corner and I have to choose between going Left or Right,
-		I'll choose going Right because it's closer to the exit.
+E.g.: if the exit is Top Right corner and it has to choose between going Left or Right,
+		it will choose going Right because it's closer to the exit.
