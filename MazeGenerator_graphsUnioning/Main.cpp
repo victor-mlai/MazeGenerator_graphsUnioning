@@ -72,12 +72,7 @@ struct vec2
 };
 
 void solveBFS(int** maze, vec2 start, vec2 exit) {
-	// set value in Maze at position
-	auto setMaze = [maze](vec2& v, int value)->void { maze[v.x][v.y] = value; };
-
-	// get value from Maze
-	auto getMaze = [maze](vec2& v)->int { return maze[v.x][v.y]; };
-
+	// set the distance to start position for each empty space = MaxDist
 	for (int i = 1; i <= N; i++) {
 		for (int j = 1; j <= M; j++) {
 			if (maze[i][j] != BLOCK)
@@ -86,10 +81,13 @@ void solveBFS(int** maze, vec2 start, vec2 exit) {
 	}
 
 	// Mark the Start and the exit
-	setMaze(exit, EXIT);
-	setMaze(start, START);
-
-	auto cmp = [exit](vec2 v1, vec2 v2) { return v1.distance(exit) > v2.distance(exit); };
+	auto Mz = [maze](vec2& v)->int& { return maze[v.x][v.y]; };
+	Mz(exit) = EXIT;
+	Mz(start) = START;
+	// maze[exit.x][exit.y] = EXIT;
+	// maze[start.x][start.y] = START;
+		
+	auto cmp = [&exit](vec2 v1, vec2 v2) { return v1.distance(exit) > v2.distance(exit); };
 	std::priority_queue<vec2, std::vector<vec2>, decltype(cmp)> q(cmp);
 
 	vec2 d[] = { UP1, RIGHT1, DOWN1, LEFT1 };	// directions
@@ -107,7 +105,6 @@ void solveBFS(int** maze, vec2 start, vec2 exit) {
 			V = T + dir;
 
 			if (maze[V.x][V.y] > maze[T.x][T.y] + 1) {
-				//set(V, get(T) + 1);
 				maze[V.x][V.y] = maze[T.x][T.y] + 1;
 				if (V == exit)
 					break;
@@ -133,7 +130,7 @@ void solveBFS(int** maze, vec2 start, vec2 exit) {
 	}
 
 	vec2 curr = exit;
-	int min = maze[curr.x][curr.y];	// get(curr);
+	int min = maze[curr.x][curr.y];
 	std::vector<vec2> path;
 	std::vector<int> dirs;
 	path.push_back(exit);
@@ -153,7 +150,6 @@ void solveBFS(int** maze, vec2 start, vec2 exit) {
 	dirs.push_back(LEFT);
 
 	for (int i = 1; i < path.size() - 1; i++) {
-		//setMaze(path[i], dirs[i]);
 		maze[path[i].x][path[i].y] = dirs[i];
 		reDrawMaze.notify_one();	// letting the maze object redraw the maze
 		this_thread::sleep_for(10ms);
