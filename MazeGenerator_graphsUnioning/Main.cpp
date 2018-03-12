@@ -288,10 +288,6 @@ public:
 	}
 };
 
-void startApp(Maze& m) {
-	m.Start();
-}
-
 int main()
 {
 	int** maze = (int**)malloc((N + 2) * sizeof(int*));
@@ -301,7 +297,7 @@ int main()
 	Maze maze_app = Maze(maze);
 	maze_app.ConstructConsole(200, 110, 6, 6);
 
-	std::thread first(startApp, maze_app);	// continously draws the maze
+	std::thread first(&Maze::Start, maze_app);	// continously draws the maze
 	std::thread second(createMaze, maze);	// generates and solves the maze
 
 	first.join();
