@@ -7,8 +7,8 @@
 #include <condition_variable>
 #include <mutex>
 
-#define N 197	// number of lines
-#define M 107	// number of columns
+#define N 65	// number of lines
+#define M 67	// number of columns
 #define MAXDIST (N*M)
 
 #define BLOCK -1
@@ -57,6 +57,10 @@ struct vec2
 		return { x + other.x, y + other.y };
 	}
 
+	vec2 operator/ (int devider) {
+		return { x / devider, y / devider };
+	}
+
 	void operator= (const vec2& other) {
 		x = other.x;
 		y = other.y;
@@ -87,7 +91,7 @@ void solveBFS(int** maze, vec2 start, vec2 exit) {
 	// maze[exit.x][exit.y] = EXIT;
 	// maze[start.x][start.y] = START;
 		
-	auto cmp = [&exit](vec2 v1, vec2 v2) { return v1.distance(exit) > v2.distance(exit); };
+	auto cmp = [&exit](vec2 &v1, vec2 &v2) { return v1.distance(exit) > v2.distance(exit); };
 	std::priority_queue<vec2, std::vector<vec2>, decltype(cmp)> q(cmp);
 
 	vec2 d[] = { UP1, RIGHT1, DOWN1, LEFT1 };	// directions
@@ -158,7 +162,7 @@ void solveBFS(int** maze, vec2 start, vec2 exit) {
 }
 
 // returns true with a probability of 1/nr
-bool cond(int nr) {
+bool rand_true(int nr) {
 	return ((float)rand() / RAND_MAX < (float)1 / nr);
 }
 
@@ -188,6 +192,8 @@ void createMaze(int** maze) {
 
 	nrOfGraphs = id_graph; // nr grafuri
 
+	// returns a reference to maze[v.x][v.y]
+	auto Mz = [maze](vec2& v)->int& { return maze[v.x][v.y]; };
 	vec2 x, y;	// create connection between x and y (delete the block betwwen them)
 	int nr;
 	while (nrOfGraphs > 1) {
@@ -195,17 +201,19 @@ void createMaze(int** maze) {
 		ry = (((rand()) % (M - 4)) / 2) * 2 + 2;
 		id_graph = maze[rx][ry];	// choose a random graph
 		nr = 1;
-		for (i = 2; i < N; i += 2) {	// search for all nodes that are in the random graph
+		for (i = 2; i < N; i += 2) {	// iterate through all nodes that are in the random graph
 			for (j = 2; j < M; j += 2) {
-				if (maze[i][j] == id_graph) {
+				vec2 &this_pos = vec2(i, j);
+				if (Mz(this_pos) == id_graph) {
 					for (vec2 dir : d) {	// for each neighbour
+						vec2 &neigh_pos = vec2(i + dir.x, j + dir.y);
 						// if the neighbour node is from a different graph
-						if (maze[i + dir.x][j + dir.y] != BLOCK &&
-							maze[i + dir.x][j + dir.y] != id_graph) {
+						if (Mz(neigh_pos) != BLOCK &&
+							Mz(neigh_pos) != id_graph) {
 							// there is a chance of 1/nr to choose him to connect the 2 graphs
-							if (cond(nr)) {
-								x = vec2(i + dir.x, j + dir.y);	// neighbour node
-								y = vec2(i, j);	// this node
+							if (rand_true(nr)) {
+								x = neigh_pos;	// neighbour position
+								y = this_pos;	// this position
 								nr++;	// number of pairs (x, y) to choose from
 							}
 						}
@@ -214,9 +222,9 @@ void createMaze(int** maze) {
 			}
 		}
 
-		id_ng = maze[x.x][x.y];	// id of a the neighbour graph
+		id_ng = Mz(x);	// id of a the neighbour graph
 
-		maze[(x.x + y.x) / 2][(x.y + y.y) / 2] = id_graph;	// connect the 2 graphs
+		Mz((x + y) / 2) = id_graph;	// the block between them = id_graph
 
 		for (i = 2; i < N; i += 2) {
 			for (j = 2; j < M; j += 2) {
