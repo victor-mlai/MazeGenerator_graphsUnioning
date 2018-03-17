@@ -7,8 +7,8 @@
 #include <condition_variable>
 #include <mutex>
 
-#define N 65	// number of lines
-#define M 67	// number of columns
+#define N 197	// number of lines
+#define M 107	// number of columns
 #define MAXDIST (N*M)
 
 #define BLOCK -1
@@ -194,37 +194,38 @@ void createMaze(int** maze) {
 
 	// returns a reference to maze[v.x][v.y]
 	auto Mz = [maze](vec2& v)->int& { return maze[v.x][v.y]; };
-	vec2 x, y;	// create connection between x and y (delete the block betwwen them)
-	int nr;
+	vec2 saved_this_pos, saved_neigh_pos;	// create connection between them (delete the block between them)
+	int nr;	// used for randomly choosing between all neighbours so I can connect the graphs
 	while (nrOfGraphs > 1) {
 		rx = (((rand()) % (N - 4)) / 2) * 2 + 2;	// gives a random odd number between 2 and n - 2
 		ry = (((rand()) % (M - 4)) / 2) * 2 + 2;
 		id_graph = maze[rx][ry];	// choose a random graph
 		nr = 1;
-		for (i = 2; i < N; i += 2) {	// iterate through all nodes that are in the random graph
+		// iterate through all the nodes that are in the random graph
+		for (i = 2; i < N; i += 2) {
 			for (j = 2; j < M; j += 2) {
 				vec2 &this_pos = vec2(i, j);
 				if (Mz(this_pos) == id_graph) {
 					for (vec2 dir : d) {	// for each neighbour
 						vec2 &neigh_pos = vec2(i + dir.x, j + dir.y);
 						// if the neighbour node is from a different graph
-						if (Mz(neigh_pos) != BLOCK &&
-							Mz(neigh_pos) != id_graph) {
-							// there is a chance of 1/nr to choose him to connect the 2 graphs
+						if (Mz(neigh_pos) != BLOCK 
+						&& Mz(neigh_pos) != id_graph) {
+							// randomly chosing the pair while iterating
 							if (rand_true(nr)) {
-								x = neigh_pos;	// neighbour position
-								y = this_pos;	// this position
-								nr++;	// number of pairs (x, y) to choose from
+								saved_this_pos = this_pos;
+								saved_neigh_pos = neigh_pos;
 							}
+							nr++;	// number of pairs to choose from
 						}
 					}
 				}
 			}
 		}
 
-		id_ng = Mz(x);	// id of a the neighbour graph
+		id_ng = Mz(saved_neigh_pos);	// id of a the neighbour graph
 
-		Mz((x + y) / 2) = id_graph;	// the block between them = id_graph
+		Mz((saved_this_pos + saved_neigh_pos) / 2) = id_graph;	// the block between them = id_graph
 
 		for (i = 2; i < N; i += 2) {
 			for (j = 2; j < M; j += 2) {
