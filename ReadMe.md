@@ -1,12 +1,26 @@
 Maze Generator by unionning graphs
 
+## Install
+
+Make sure you have git and CMake installed
+
+Cloning a Project with Submodules:
+
+`git clone --recurse-submodules https://github.com/victor-mlai/MazeGenerator_graphsUnioning.git`
+
+`cmake -S -B .build`
+
+`cmake run`
+
+## Algorithm explained
+
 I used the OneLoneCoder's header to create a new console in which to draw the maze.
 I created 2 threads: one that draws the maze and one that creates it and then solves it.
 
 
 Algorithm for Generating the maze:
 Considering this "maze under construction" where each square is a graph that contains exactly 1 node.
-
+```
 1 2 3 4 5 6 7 8 9 ..    13
 +---+---+---+---+---+---+ 1
 | - | - | - | - | - | - | 2
@@ -21,9 +35,9 @@ Considering this "maze under construction" where each square is a graph that con
 +---+---+---+---+---+---+ .
 | - | - | - | - | - | - | .
 +---+---+---+---+---+---+ 13
-
+```
 We choose randomly 2 adiacent nodes from 2 different graphs and unite them.
-
+```
 1 2 3 4 5 6 7 8 9 ..    13
 +---+---+---+---+---+---+ 1
 | - | - | - | - | - | - | 2
@@ -38,9 +52,9 @@ We choose randomly 2 adiacent nodes from 2 different graphs and unite them.
 +---+---+---+---+---+---+ .
 | - | - | - | - | - | - | .
 +---+---+---+---+---+---+ 13
-
+```
 And repeat until there is only one graph
-
+```
 1 2 3 4 5 6 7 8 9 ..    13	   1 2 3 4 5 6 7 8 9 ..    13	
 +---+---+---+---+---+---+ 1	   +---+---+---+---+---+---+ 1	
 | - | - | - | - | - | - | 2	   | - | - | - | - | - | - | 2	
@@ -56,7 +70,6 @@ And repeat until there is only one graph
 | - | - | - | - | - | - | .	   | - | - | - | - | - | - | .	
 +---+---+---+---+---+---+ 13  	   +---+---+---+---+---+---+ 13 
 
-
 1 2 3 4 5 6 7 8 9 ..    13	   1 2 3 4 5 6 7 8 9 ..    13
 +---+---+---+---+---+---+ 1	   +---+---+---+---+---+---+ 1
 | - |       | - | - | - | 2	   | - |       | - | - | - | 2
@@ -71,6 +84,7 @@ And repeat until there is only one graph
 +---+---+---+---+---+---+ .	   +---+---+---+---+---+---+ .
 | - | - | - | - | - | - | .	   | - | - | - | - | - | - | .
 +---+---+---+---+---+---+ 13 	   +---+---+---+---+---+---+ 13
+
 .
 .
 .
@@ -89,9 +103,9 @@ And repeat until there is only one graph
 +   +---+   +---+   +---+ 11
 |       |               | 12
 +---+---+---+---+---+---+ 13
-
+```
 And then solve it using bfs with prioritised direction
-
+```
 1 2 3 4 5 6 7 8 9 ..    13
 +---+---+---+---+---+---+ 1
 |   |       |     >   >   2
@@ -106,6 +120,6 @@ And then solve it using bfs with prioritised direction
 +   +---+   +---+   +---+ 11
   ^     |               | 12
 +---+---+---+---+---+---+ 13
-
+```
 E.g.: if the exit is Top Right corner and it has to choose between going Left or Right,
 		it will choose going Right because it's closer to the exit.
