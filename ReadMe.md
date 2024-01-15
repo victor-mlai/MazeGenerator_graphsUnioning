@@ -1,7 +1,14 @@
-Maze Generator by unionning graphs
+# Maze Generator by unionning graphs
 
-![Latest (2024)](https://github.com/victorlaurentiu/MazeGenerator_graphsUnioning/blob/master/media/result_2024.gif)
-![Previously (2022)](https://github.com/victorlaurentiu/MazeGenerator_graphsUnioning/blob/master/media/result_2022_v2.gif)
+## Results
+
+### Latest (2024)
+
+<img src="media/result_2024.gif" width="50%"/>
+
+### Previously (2022)
+
+<img src="media/result_2022_v2.gif" width="50%"/>
 
 ## Install
 
