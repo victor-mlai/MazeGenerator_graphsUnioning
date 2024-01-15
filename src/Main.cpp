@@ -14,7 +14,7 @@ int main()
 
 	// You might want to also adjust the deltaTime for larger mazes
 	using namespace std::literals;
-	constexpr auto createDelay = 200ns;
+	constexpr auto createDelay = 1000ns;
 	// in case the solver is going too fast
 	constexpr auto solverDelay = 5000ns;
 

@@ -11,9 +11,7 @@
 
 #include "MazeModel.hpp"
 #include <unordered_map>
-#include <condition_variable>
 #include <mutex>
-#include <thread>
 #include <chrono>
 #include <semaphore>
 
@@ -24,7 +22,7 @@ static const std::unordered_map<CellType, olc::Pixel> CELL_COLOUR_MAP = {
 	{CellType::UP      , olc::YELLOW},
 
 	{CellType::BLOCK   , olc::DARK_BLUE},
-	{CellType::EMPTY   , olc::DARK_GREY},
+	{CellType::EMPTY   , olc::DARK_MAGENTA},
 
 	{CellType::START   , olc::YELLOW},
 	{CellType::MAXDIST , olc::BLACK},
@@ -43,8 +41,9 @@ private:
 	std::chrono::nanoseconds m_delay{ 1000 };
 
 	// controls the redrawing of the maze
-	std::counting_semaphore<1> m_redrawMazeSem{ 0 };
 	std::counting_semaphore<1> m_continueConstructingMazeSem{ 0 };
+	bool m_stopFlg = false;
+	bool m_mazeChanged = false;
 
 public:
 	MazeView(const int rows, const int cols)
@@ -65,15 +64,23 @@ public:
 
 	void TriggerDraw()
 	{
-		m_redrawMazeSem.release();
+		m_mazeChanged = true;
 		std::this_thread::sleep_for(m_delay);
 		m_continueConstructingMazeSem.acquire();
 	}
 
 	bool OnUserUpdate(float) override
 	{
-		// wait for TriggerDraw to be called by the Creator thread
-		m_redrawMazeSem.acquire();
+		if (GetKey(olc::Key::ESCAPE).bHeld)
+		{
+			m_stopFlg = true;
+			return false;
+		}
+
+		if (!m_mazeChanged)
+			return false;
+
+		m_mazeChanged = false;
 
 		Super::Clear(olc::BLACK);
 
@@ -97,15 +104,13 @@ public:
 		return true;
 	}
 
-	// mandatory to override
 	bool OnUserCreate() override
 	{
 		return true;
 	}
 
-	// mandatory to override
 	bool OnUserDestroy() override
 	{
-		return false;
+		return m_stopFlg;
 	}
 };

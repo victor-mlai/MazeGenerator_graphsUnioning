@@ -1,20 +1,30 @@
 Maze Generator by unionning graphs
 
-![Result](https://github.com/victorlaurentiu/MazeGenerator_graphsUnioning/blob/master/media/MazeGenerator_graphsUnioning_7ON0ouTN31.gif)
+![Latest (2024)](https://github.com/victorlaurentiu/MazeGenerator_graphsUnioning/blob/master/media/result_2024.gif)
+![Previously (2022)](https://github.com/victorlaurentiu/MazeGenerator_graphsUnioning/blob/master/media/result_2022_v2.gif)
 
 ## Install
 
 Make sure you have git and CMake installed
 
-Cloning a Project with Submodules:
+Cloning a Project with Submodules using **--recurse-submodules**:
 
-`git clone --recurse-submodules https://github.com/victor-mlai/MazeGenerator_graphsUnioning.git`
+```
+git clone --recurse-submodules https://github.com/victor-mlai/MazeGenerator_graphsUnioning.git
+```
 
-`cmake -S -B .build`
+Then either use CMake GUI + IDE or these commands to Generate, Build and Run the project:
 
-`cmake run`
+```
+cd MazeGenerator_graphsUnioning
+cmake -S . -B .build
+cmake --build .build --config Release
+./.build/Release/maze_gen
+```
 
 In Main.cpp you can change the rows, cols, cellSize. And in MazeView.hpp the colours.
+
+While running, use Esc to stop the window anytime.
 
 ## Algorithm explained
 
